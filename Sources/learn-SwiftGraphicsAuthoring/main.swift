@@ -73,7 +73,7 @@ app.get("/cairotest") { (request:HTTP.Request) in
     context.stroke()
     
     // Draw Surface
-    let pngData = try! Data(contentsOf: URL(fileURLWithPath: "/Users/arakane/github/learn-SwiftGraphicsAuthoring/Logo.png"))
+    let pngData = try! Data(contentsOf: URL(string: "http://www.addli.co.jp/assets/images/+Li_Logo.png")!)
     let p_surf = try! Surface.Image(png: pngData)
     let pattern = Pattern(surface: p_surf)
     let rect = CGRect(x: 100, y: 100, width: 100, height: 100)
@@ -86,7 +86,7 @@ app.get("/cairotest") { (request:HTTP.Request) in
     patternMatrix.translate(x: 0, y: Double(-sourceRect.size.height))
     patternMatrix.invert()
     pattern.matrix = patternMatrix
-    pattern.extend = .reflect
+    pattern.extend = .pad
     context.operator = CAIRO_OPERATOR_OVER
     context.source = pattern
     context.addRectangle(x: Double(rect.origin.x),
@@ -95,6 +95,8 @@ app.get("/cairotest") { (request:HTTP.Request) in
                          height: Double(rect.size.height))
     context.fill()
     context.restore()
+    
+    // Draw TTF
     
     let png = try! context.surface.writePNG()
     
@@ -106,7 +108,30 @@ import SwiftGD
 
 app.get("/gdtest") { (request:HTTP.Request) in
     
-    return "OK"
+    if let image = Image(width: 500, height: 500) {
+        
+        // flood from from X:250 Y:250 using red
+        image.fill(from: Point(x: 250, y: 250), color: Color.red)
+        
+        // draw a filled blue ellipse in the center
+        image.fillEllipse(center: Point(x: 250, y: 250), size: Size(width: 150, height: 150), color: Color.blue)
+        
+        // draw a filled green rectangle also in the center
+        image.fillRectangle(topLeft: Point(x: 200, y: 200), bottomRight: Point(x: 300, y: 300), color: Color.green)
+        
+        // remove all the colors from the image
+        //image.desaturate()
+        
+        // now apply a dark red tint
+        //image.colorize(using: Color(red: 0.3, green: 0, blue: 0, alpha: 1))
+        
+        // Paste a image
+        
+        let png = try! image.export(as: .png)
+        return HTTP.Response( status: .ok, headers: [HeaderKey("Content-Type") : "image/png"], body: png)
+    } else{
+        return HTTP.Response( status: .internalServerError )
+    }
 }
 
 try app.run()
